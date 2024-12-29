@@ -13,4 +13,9 @@ contactsRouter.get(
   ctrlWrapper(contactsController.getContactByIdController)
 );
 
+contactsRouter.post(
+  "/contacts",
+  ctrlWrapper(contactsController.addContactController)
+);
+
 export default contactsRouter;

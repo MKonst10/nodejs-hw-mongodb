@@ -17,3 +17,5 @@ export const getContactById = async (contactId) => {
     throw new Error(error.message);
   }
 };
+
+export const addContact = (payload) => Contact.create(payload);
