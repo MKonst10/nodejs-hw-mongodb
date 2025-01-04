@@ -6,10 +6,7 @@ export const isValidId = (req, res, next) => {
 
   if (!isValidObjectId(contactId)) {
     return next(
-      createHttpError(
-        400,
-        `Invalid ID format: ${contactId}. Provide a valid ObjectId.`
-      )
+      createHttpError(400, `Invalid ID: ${contactId}. Provide a valid id.`)
     );
   }
 
