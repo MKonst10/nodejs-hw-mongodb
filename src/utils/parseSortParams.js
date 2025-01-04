@@ -1,4 +1,4 @@
-import { sortByList } from "../db/models/contacts";
+import { sortByList } from "../db/models/contacts.js";
 
 const sortOrderList = ["asc", "desc"];
 
