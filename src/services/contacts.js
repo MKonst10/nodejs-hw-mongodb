@@ -1,9 +1,15 @@
 import Contact from "../db/models/contacts.js";
+import { calcPaginationData } from "../utils/calcPaginationData.js";
 
-export const getContacts = async () => {
+export const getContacts = async ({ page = 1, perPage = 10 }) => {
   try {
-    const contacts = await Contact.find();
-    return contacts;
+    const limit = perPage;
+    const skip = (page - 1) * limit;
+    const contacts = await Contact.find().skip(skip).limit(limit);
+    const totalItems = await Contact.countDocuments();
+    const paginationData = calcPaginationData({ totalItems, page, perPage });
+
+    return { contacts, totalItems, ...paginationData };
   } catch (error) {
     throw new Error(error.message);
   }
@@ -23,7 +29,6 @@ export const addContact = (payload) => Contact.create(payload);
 export const updateContact = async (_id, payload, options = {}) => {
   const { upsert = false } = options;
   const result = await Contact.findOneAndUpdate({ _id }, payload, {
-    new: true,
     upsert,
     includeResultMetadata: true,
   });
