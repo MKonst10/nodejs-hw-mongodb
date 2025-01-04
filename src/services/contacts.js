@@ -23,7 +23,6 @@ export const addContact = (payload) => Contact.create(payload);
 export const updateContact = async (_id, payload, options = {}) => {
   const { upsert = false } = options;
   const result = await Contact.findOneAndUpdate({ _id }, payload, {
-    new: true,
     upsert,
     includeResultMetadata: true,
   });
