@@ -37,6 +37,8 @@ contactSchema.post("save", handleSaveError);
 contactSchema.pre("findOneAndUpdate", setUpdateSettings);
 contactSchema.post("findOneAndUpdate", handleSaveError);
 
+export const sortByList = ["name"];
+
 const Contact = model("contact", contactSchema);
 
 export default Contact;
