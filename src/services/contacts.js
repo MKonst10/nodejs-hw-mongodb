@@ -17,7 +17,7 @@ export const getContacts = async ({
     const totalItems = await Contact.countDocuments();
     const paginationData = calcPaginationData({ totalItems, page, perPage });
 
-    return { contacts, totalItems, ...paginationData };
+    return { contacts, page, perPage, totalItems, ...paginationData };
   } catch (error) {
     throw new Error(error.message);
   }
