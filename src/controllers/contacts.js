@@ -20,6 +20,12 @@ export const getContactsController = async (req, res) => {
     message: "Successfully found contacts!",
     data: {
       data: contacts.contacts,
+      page: contacts.page,
+      perPage: contacts.perPage,
+      totalItems: contacts.totalItems,
+      totalPages: contacts.totalPages,
+      hasPreviousPage: contacts.hasPreviousPage,
+      hasNextPage: contacts.hasNextPage,
     },
   });
 };
