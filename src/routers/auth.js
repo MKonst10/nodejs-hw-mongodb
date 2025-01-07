@@ -9,7 +9,7 @@ import { ctrlWrapper } from "../utils/ctrlWrapper.js";
 const authRouter = Router();
 
 authRouter.post(
-  "/",
+  "/register",
   validateBody(authRegisterSchema),
   ctrlWrapper(authController.registerController)
 );
