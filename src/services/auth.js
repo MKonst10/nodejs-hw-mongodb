@@ -49,3 +49,11 @@ export const login = async (payload) => {
     refreshTokenValidUntil: Date.now() + refreshTokenLifetime,
   });
 };
+
+export const getUser = (filter) => {
+  return User.findOne(filter);
+};
+
+export const getSession = (filter) => {
+  return Session.findOne(filter);
+};
