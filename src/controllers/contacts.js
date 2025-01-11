@@ -59,9 +59,12 @@ export const addContactController = async (req, res) => {
 
 export const upsertContactController = async (req, res, next) => {
   const { _id: userId } = req.user;
-  const { id: _id } = req.params;
+  const { contactId: _id } = req.params;
+
+  const filter = { _id: _id };
+
   const result = await contactServices.updateContact(
-    _id,
+    filter,
     {
       ...req.body,
       userId,
@@ -69,11 +72,22 @@ export const upsertContactController = async (req, res, next) => {
     { upsert: true }
   );
 
+  console.log("Request params ID:", _id);
+  console.log("Update result:", result);
+
+  if (!_id) {
+    throw createHttpError(400, "ID parameter is required");
+  }
+
   if (!result) {
     throw createHttpError(404, `Contact with id ${_id} not found`);
   }
 
   const contact = await contactServices.getContactById(_id);
+  console.log("Retrieved contact:", contact);
+  if (!contact) {
+    throw createHttpError(500, "Failed to retrieve updated contact");
+  }
 
   res.status(200).json({
     status: 200,
