@@ -1,15 +1,36 @@
 import Contact from "../db/models/contacts.js";
 import { calcPaginationData } from "../utils/calcPaginationData.js";
 
-export const getContacts = async ({ page = 1, perPage = 10 }) => {
+export const getContacts = async ({
+  page = 1,
+  perPage = 10,
+  sortBy = "name",
+  sortOrder = "asc",
+  filter = {},
+}) => {
   try {
     const limit = perPage;
     const skip = (page - 1) * limit;
-    const contacts = await Contact.find().skip(skip).limit(limit);
-    const totalItems = await Contact.countDocuments();
+    const contactsQuery = Contact.find();
+
+    if (filter.isFavourite) {
+      contactsQuery.where("isFavourite").equals(filter.isFavourite);
+    }
+
+    if (filter.userId) {
+      contactsQuery.where("userId").equals(filter.userId);
+    }
+
+    const items = await contactsQuery
+      .skip(skip)
+      .limit(limit)
+      .sort({ [sortBy]: sortOrder });
+    const totalItems = await Contact.find()
+      .merge(contactsQuery)
+      .countDocuments();
     const paginationData = calcPaginationData({ totalItems, page, perPage });
 
-    return { contacts, totalItems, ...paginationData };
+    return { data: items, page, perPage, totalItems, ...paginationData };
   } catch (error) {
     throw new Error(error.message);
   }
@@ -24,11 +45,13 @@ export const getContactById = async (contactId) => {
   }
 };
 
+export const getContact = (filter) => Contact.findOne(filter);
+
 export const addContact = (payload) => Contact.create(payload);
 
-export const updateContact = async (_id, payload, options = {}) => {
+export const updateContact = async (filter, payload, options = {}) => {
   const { upsert = false } = options;
-  const result = await Contact.findOneAndUpdate({ _id }, payload, {
+  const result = await Contact.findOneAndUpdate(filter, payload, {
     upsert,
     includeResultMetadata: true,
   });

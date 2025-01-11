@@ -9,7 +9,8 @@ export const contactAddSchema = Joi.object({
   contactType: Joi.string()
     .min(3)
     .max(20)
-    .valid(...contactTypes),
+    .valid(...contactTypes)
+    .required(),
 });
 
 export const contactUpdateSchema = Joi.object({
