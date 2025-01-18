@@ -1,12 +1,28 @@
 import User from "../db/models/User.js";
 import Session from "../db/models/Session.js";
+
 import createHttpError from "http-errors";
 import bcrypt from "bcrypt";
 import { randomBytes } from "crypto";
+import path from "path";
+import jwt from "jsonwebtoken";
+import { readFile } from "fs";
+import Handlebars from "handlebars";
+
 import {
   accessTokenLifetime,
   refreshTokenLifetime,
 } from "../constants/users.js";
+import { TEMPLATES_DIR } from "../constants/index.js";
+import { sendEmail } from "../utils/sendEmail.js";
+import { getEnvVar } from "../utils/getEnvVar.js";
+
+const { SMTP_FROM } = process.env;
+const appDomain = getEnvVar("APP_DOMAIN");
+const jwtSecret = getEnvVar("JWT_SECRET");
+
+const emailTemplatePath = path.join(TEMPLATES_DIR, "verify-email.html");
+const emailTemplateSource = await readFile(emailTemplatePath, "utf-8");
 
 const createSessionData = () => ({
   accessToken: randomBytes(30).toString("base64"),
@@ -27,7 +43,37 @@ export const register = async (payload) => {
 
   const newUser = await User.create({ ...payload, password: hashPassword });
 
+  const template = Handlebars.compile(emailTemplateSource);
+
+  const token = jwt.sign({ email }, jwtSecret, { expiresIn: "1h" });
+
+  const html = template({
+    link: `${appDomain}/verify?token=${token}`,
+  });
+
+  const verifyEmail = {
+    from: SMTP_FROM,
+    to: email,
+    subject: "Verify email",
+    html,
+  };
+
+  await sendEmail(verifyEmail);
+
   return newUser;
+};
+
+export const verify = async (token) => {
+  try {
+    const { email } = jwt.verify(token, jwtSecret);
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw createHttpError(401, "User not found");
+    }
+    await User.findOneAndUpdate({ _id: user._id }, { verify: true });
+  } catch (error) {
+    throw createHttpError(401, error.message);
+  }
 };
 
 export const login = async (payload) => {
@@ -41,6 +87,10 @@ export const login = async (payload) => {
   const passwordCompare = await bcrypt.compare(password, user.password);
   if (!passwordCompare) {
     throw createHttpError(401, "Email or password invalid");
+  }
+
+  if (!user.verify) {
+    throw createHttpError(401, "Email not verified");
   }
 
   await Session.deleteOne({ userId: user._id });
