@@ -48,7 +48,7 @@ contactsRouter.patch(
   upload.single("photo"),
   isValidId,
   validateBody(contactUpdateSchema),
-  ctrlWrapper(contactsController.patchMovieController)
+  ctrlWrapper(contactsController.patchContactController)
 );
 
 contactsRouter.delete(
