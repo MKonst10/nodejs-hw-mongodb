@@ -1,9 +1,12 @@
 import createHttpError from "http-errors";
 
 import * as contactServices from "../services/contacts.js";
+import { saveFileToUploadsDir } from "../utils/saveFileToUploadsDir.js";
 import { parsePaginationParams } from "../utils/parsePaginationParams.js";
 import { parseSortParams } from "../utils/parseSortParams.js";
 import { parseContactFilterParams } from "../utils/filters/parseContactFilterParams.js";
+import { getEnvVar } from "../utils/getEnvVar.js";
+import { saveFileToCloudinary } from "../utils/saveFileToCloudinary.js";
 
 export const getContactsController = async (req, res) => {
   const { page, perPage } = parsePaginationParams(req.query);
@@ -48,8 +51,23 @@ export const getContactByIdController = async (req, res, next) => {
 };
 
 export const addContactController = async (req, res) => {
+  const cloudinaryEnable = getEnvVar("CLOUDINARY_ENABLE") === "true";
+  let photo;
+  if (req.file) {
+    if (cloudinaryEnable) {
+      photo = await saveFileToCloudinary(req.file);
+    } else {
+      photo = await saveFileToUploadsDir(req.file);
+    }
+  }
   const { _id: userId } = req.user;
-  const contact = await contactServices.addContact({ ...req.body, userId });
+
+  const contact = await contactServices.addContact({
+    ...req.body,
+    photo,
+    userId,
+  });
+
   res.status(201).json({
     status: 201,
     message: "Successfully created a contact!",
@@ -93,6 +111,38 @@ export const upsertContactController = async (req, res, next) => {
     status: 200,
     message: `Successfully patched a contact with id ${_id}!`,
     data: contact,
+  });
+};
+
+export const patchContactController = async (req, res) => {
+  const { _id: userId } = req.user;
+  const { contactId: _id } = req.params;
+
+  const cloudinaryEnable = getEnvVar("CLOUDINARY_ENABLE") === "true";
+  let photo;
+
+  if (req.file) {
+    if (cloudinaryEnable) {
+      photo = await saveFileToCloudinary(req.file);
+    } else {
+      photo = await saveFileToUploadsDir(req.file);
+    }
+  }
+
+  const result = await contactServices.updateContact(
+    { _id, userId },
+    { photo: photo },
+    req.body
+  );
+
+  if (!result) {
+    throw createHttpError(404, `Contact with id=${_id} not found`);
+  }
+
+  res.json({
+    status: 200,
+    message: "Successfully upsert contact",
+    data: result.data,
   });
 };
 
