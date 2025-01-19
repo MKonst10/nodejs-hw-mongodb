@@ -18,11 +18,14 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-    verify: {
-      type: Boolean,
-      default: false,
-      require: true,
+    photo: {
+      type: String,
     },
+    // verify: {
+    //   type: Boolean,
+    //   default: false,
+    //   require: true,
+    // },
     createdAt: {},
     updatedAt: {},
   },
