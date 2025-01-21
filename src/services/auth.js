@@ -6,7 +6,8 @@ import bcrypt from "bcrypt";
 import { randomBytes } from "crypto";
 import path from "path";
 import jwt from "jsonwebtoken";
-import { readFile } from "fs";
+import { readFile } from "fs/promises";
+import { existsSync } from "fs";
 import Handlebars from "handlebars";
 
 import {
@@ -104,42 +105,55 @@ export const login = async (payload) => {
 };
 
 export const requestResetToken = async (email) => {
-  const user = await User.findOne({ email });
-  if (!user) {
-    throw createHttpError(404, "User not found");
-  }
-
-  const resetToken = jwt.sign(
-    {
-      sub: user._id,
-      email,
-    },
-    jwtSecret,
-    {
-      expiresIn: "15m",
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw createHttpError(404, "User not found");
     }
-  );
 
-  const resetPasswordTemplatePath = path.join(
-    TEMPLATES_DIR,
-    "reset-password-email.html"
-  );
+    const resetToken = jwt.sign(
+      {
+        sub: user._id,
+        email,
+      },
+      jwtSecret,
+      {
+        expiresIn: "15m",
+      }
+    );
 
-  const templateSource = (await readFile(resetPasswordTemplatePath)).toString();
+    const resetPasswordTemplatePath = path.join(
+      TEMPLATES_DIR,
+      "reset-password-email.html"
+    );
 
-  const template = Handlebars.compile(templateSource);
+    if (!existsSync(resetPasswordTemplatePath)) {
+      throw new Error(
+        `Template file not found at path: ${resetPasswordTemplatePath}`
+      );
+    }
 
-  const html = template({
-    name: user.name,
-    link: `${appDomain}/auth/reset-pwd?token=${resetToken}`,
-  });
+    const templateSource = (
+      await readFile(resetPasswordTemplatePath)
+    ).toString();
 
-  await sendEmail({
-    from: SMTP_FROM,
-    to: email,
-    subject: "Reset your password",
-    html,
-  });
+    const template = Handlebars.compile(templateSource);
+
+    const html = template({
+      name: user.name,
+      link: `${appDomain}/auth/reset-pwd?token=${resetToken}`,
+    });
+
+    await sendEmail({
+      from: SMTP_FROM,
+      to: email,
+      subject: "Reset your password",
+      html,
+    });
+  } catch (error) {
+    console.error("Error in requestResetToken:", error);
+    throw error;
+  }
 };
 
 export const resetPassword = async (payload) => {
