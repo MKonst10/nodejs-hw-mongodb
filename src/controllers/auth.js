@@ -1,3 +1,4 @@
+import createHttpError from "http-errors";
 import * as authServices from "../services/auth.js";
 
 const setupSession = (res, session) => {
@@ -25,14 +26,19 @@ export const registerController = async (req, res) => {
   });
 };
 
-export const sendResetEmailController = async (req, res) => {
-  await authServices.requestResetToken(req.body.email);
+export const sendResetEmailController = async (req, res, next) => {
+  try {
+    await authServices.requestResetToken(req.body.email);
 
-  res.json({
-    status: 200,
-    message: "Reset password email has been successfully sent.",
-    data: {},
-  });
+    res.status(200).json({
+      status: 200,
+      message: "Reset password email has been successfully sent.",
+      data: {},
+    });
+  } catch (error) {
+    console.error("Error in sendResetEmailController:", error);
+    createHttpError(error);
+  }
 };
 
 export const resetPasswordController = async (req, res) => {
