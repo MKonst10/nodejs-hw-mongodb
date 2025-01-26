@@ -17,6 +17,10 @@ import {
 import { TEMPLATES_DIR } from "../constants/index.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { getEnvVar } from "../utils/getEnvVar.js";
+import {
+  getUsernameFormGoogleTokenPayload,
+  validateCode,
+} from "../utils/gooogleOAuth2.js";
 
 const { SMTP_FROM } = process.env;
 const appDomain = getEnvVar("APP_DOMAIN");
@@ -193,6 +197,32 @@ export const refreshToken = async (payload) => {
 
   return Session.create({
     userId: session.userId,
+    ...sessionData,
+  });
+};
+
+export const loginOrRegisterWithGoogle = async (code) => {
+  const loginTicket = await validateCode(code);
+  const payload = loginTicket.getPayload();
+
+  if (!payload) throw createHttpError(401);
+
+  let user = await User.findOne({ email: payload.email });
+  if (!user) {
+    const password = await bcrypt.hash(randomBytes(10).toString("base64"), 10);
+    const name = getUsernameFormGoogleTokenPayload(payload);
+
+    user = await User.create({
+      email: payload.email,
+      name,
+      password,
+    });
+  }
+
+  const sessionData = createSessionData();
+
+  return await Session.create({
+    userId: user._id,
     ...sessionData,
   });
 };
