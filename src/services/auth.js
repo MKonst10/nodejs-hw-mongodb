@@ -18,7 +18,7 @@ import { TEMPLATES_DIR } from "../constants/index.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { getEnvVar } from "../utils/getEnvVar.js";
 import {
-  getUsernameFormGoogleTokenPayload,
+  getUsernameFromGoogleTokenPayload,
   validateCode,
 } from "../utils/gooogleOAuth2.js";
 
@@ -210,7 +210,7 @@ export const loginOrRegisterWithGoogle = async (code) => {
   let user = await User.findOne({ email: payload.email });
   if (!user) {
     const password = await bcrypt.hash(randomBytes(10).toString("base64"), 10);
-    const name = getUsernameFormGoogleTokenPayload(payload);
+    const name = getUsernameFromGoogleTokenPayload(payload);
 
     user = await User.create({
       email: payload.email,

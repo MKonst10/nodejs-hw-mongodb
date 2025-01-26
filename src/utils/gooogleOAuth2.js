@@ -9,8 +9,8 @@ const PATH_JSON = path.join(process.cwd(), "google-oauth.json");
 
 const oauthConfig = JSON.parse(await readFile(PATH_JSON));
 
-const clientId = getEnvVar("GOOGLE_AUTH_CLIENT_ID");
-const clientSecret = getEnvVar("GOOGLE_AUTH_CLIENT_SECRET");
+const clientId = getEnvVar("GOOGLE_OAUTH_CLIENT_ID");
+const clientSecret = getEnvVar("GOOGLE_OAUTH_CLIENT_SECRET");
 
 const googleOAuthClient = new OAuth2Client({
   clientId,
